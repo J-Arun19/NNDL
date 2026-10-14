@@ -1,0 +1,87 @@
+{
+  "canvas_height": 128,
+  "canvas_width": 128,
+  "canvas_channels": 1,
+  "joint_radius": 3,
+  "bone_thickness": 2,
+  "joint_intensity": 255,
+  "bone_intensity": 180,
+  "background_intensity": 0,
+  "min_visibility": 0.5,
+  "critical_keypoints_ratio": 0.7,
+  "skeletal_connections": [
+    [
+      11,
+      12
+    ],
+    [
+      11,
+      23
+    ],
+    [
+      12,
+      24
+    ],
+    [
+      23,
+      24
+    ],
+    [
+      11,
+      13
+    ],
+    [
+      13,
+      15
+    ],
+    [
+      12,
+      14
+    ],
+    [
+      14,
+      16
+    ],
+    [
+      23,
+      25
+    ],
+    [
+      25,
+      27
+    ],
+    [
+      27,
+      29
+    ],
+    [
+      29,
+      31
+    ],
+    [
+      27,
+      31
+    ],
+    [
+      24,
+      26
+    ],
+    [
+      26,
+      28
+    ],
+    [
+      28,
+      30
+    ],
+    [
+      30,
+      32
+    ],
+    [
+      28,
+      32
+    ]
+  ],
+  "coordinate_normalization": "scaled_to_canvas_with_boundary_clamping"
+}

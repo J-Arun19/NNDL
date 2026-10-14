@@ -1,0 +1,225 @@
+================================================================================
+SAFELIFT DATASET AUDIT REPORT
+Location: data/annotations.json & data/raw_videos/
+================================================================================
+
+1. EXECUTIVE AUDIT SUMMARY
+----------------------------------------
+Total annotation records in annotations.json : 182
+Total extracted MP4 files in lateral folder  : 30
+Total extracted MP4 files in oblique folder  : 19
+Total extracted MP4 files across both folders: 49
+Literal exact filename matches               : 0 (all extracted files have '_anonymized' suffix)
+Documented convention matches                : 49 / 49 extracted files (100.0%)
+Unmatched extracted video files on disk      : 0
+Unmatched annotation entries                 : 133 (belong to other benchmark environments)
+Ambiguous video references                   : 0
+
+2. ANNOTATIONS.JSON STRUCTURE & SCHEMA ANALYSIS
+----------------------------------------
+Format: Top-level JSON Array containing 182 individual action trial objects.
+Schema Keys per Entry:
+  - Note                         (Example: 'unknown')
+  - action_end                   (Example: {'video_second': 5, 'box_height_cm': 72, 'box_dist)
+  - action_start                 (Example: {'video_second': 2, 'box_height_cm': 0, 'box_dista)
+  - box_depth_cm                 (Example: 24.6)
+  - box_height_cm                (Example: 23.4)
+  - box_width_cm                 (Example: 28.7)
+  - multiple_subjects_lifting    (Example: False)
+  - one_hand_lifting             (Example: False)
+  - subject_age                  (Example: 25.0)
+  - subject_gender               (Example: 'M')
+  - subject_height_cm            (Example: 168)
+  - subjective_judgment          (Example: 'unknown')
+  - video                        (Example: 'gd_0006.mp4')
+
+Subjective Judgment Distribution (Overall):
+  - unknown             : 176 (96.7%)
+  - intermediate        :   6 (3.3%)
+
+Subjective Judgment in Matched Env 4 Files:
+  - intermediate        :   6 (12.2%)
+  - unknown             :  43 (87.8%)
+  * Note: The only 6 non-unknown judgments in the entire dataset are participant A lateral lifts.
+  * CRITICAL OBSERVATION: Neither 'safe' nor 'unsafe' labels exist in subjective_judgment.
+
+Action Annotation Details:
+  - 'action_start' dictionary keys:
+      * video_second (timestamp in seconds when lifting begins)
+      * box_height_cm (initial height of the box from floor)
+      * box_distance_horizontal_from_mid_ankles_cm (horizontal distance to ankles)
+      * hand_distance_horizontal_from_mid_ankles_cm (horizontal hand distance)
+      * hand_vertical_distance_from_floor_cm (vertical hand height from floor)
+      * angle_of_asymmetry_degree (sagittal asymmetry angle, typically 0)
+  - 'action_end' dictionary keys:
+      * video_second (timestamp in seconds when action completes)
+      * box_height_cm (final height of box at target surface)
+      * box_distance_horizontal_from_mid_ankles_cm
+      * hand_distance_horizontal_from_mid_ankles_cm
+      * hand_vertical_distance_from_floor_cm
+      * angle_of_asymmetry_degree
+
+3. FILENAME CONVENTIONS & LOCAL DOCUMENTATION INSPECTION
+----------------------------------------
+Naming Syntax for Environment 4:
+  Pattern: [Subject].[Task] [Camera_View] [Trial_Number]_anonymized.mp4
+  Components:
+    - Subject Identifier : Single uppercase letter ('A.', 'B.', 'C.', 'D.')
+    - Task Direction     :
+        * TERRA-CARRIOLA : Ground to Wheelbarrow (Manual lifting phase)
+        * CARRIOLA-TERRA : Wheelbarrow to Ground (Manual lowering phase)
+    - Camera Perspective :
+        * LAT            : Laterale (Lateral sagittal-plane perspective)
+        * 3quarti        : Tre Quarti (Three-quarters oblique perspective)
+    - Trial Number       : Integer index (1, 2, 3, 4, 5, 6)
+    - Processing Marker  : '_anonymized' (Denotes face-blurring for subject privacy)
+    - Extension          : .mp4
+  Annotation vs Disk Mapping:
+    - annotations.json references the un-anonymized master filename (e.g., 'A. TERRA-CARRIOLA LAT 1.mp4')
+    - Extracted files on disk have the '_anonymized' token (e.g., 'A. TERRA-CARRIOLA LAT 1_anonymized.mp4')
+    - Mapping is exact, deterministic, and bijective (1-to-1).
+
+4. COMPLETE RECURSIVE LISTING OF EXTRACTED MP4 FILES (49 TOTAL)
+----------------------------------------
+A. video_env_4_anonymized (Lateral View, 30 files):
+    A. CARRIOLA-TERRA LAT 1_anonymized.mp4
+    A. CARRIOLA-TERRA LAT 2_anonymized.mp4
+    A. CARRIOLA-TERRA LAT 3_anonymized.mp4
+    A. TERRA-CARRIOLA LAT 1_anonymized.mp4
+    A. TERRA-CARRIOLA LAT 2_anonymized.mp4
+    A. TERRA-CARRIOLA LAT 3_anonymized.mp4
+    B. CARRIOLA-TERRA LAT 1_anonymized.mp4
+    B. CARRIOLA-TERRA LAT 2_anonymized.mp4
+    B. CARRIOLA-TERRA LAT 3_anonymized.mp4
+    B. CARRIOLA-TERRA LAT 4_anonymized.mp4
+    B. CARRIOLA-TERRA LAT 5_anonymized.mp4
+    B. CARRIOLA-TERRA LAT 6_anonymized.mp4
+    B. TERRA-CARRIOLA LAT 1_anonymized.mp4
+    B. TERRA-CARRIOLA LAT 2_anonymized.mp4
+    B. TERRA-CARRIOLA LAT 3_anonymized.mp4
+    B. TERRA-CARRIOLA LAT 4_anonymized.mp4
+    C. CARRIOLA-TERRA LAT 1_anonymized.mp4
+    C. CARRIOLA-TERRA LAT 2_anonymized.mp4
+    C. CARRIOLA-TERRA LAT 3_anonymized.mp4
+    C. CARRIOLA-TERRA LAT 4_anonymized.mp4
+    C. TERRA-CARRIOLA LAT 1_anonymized.mp4
+    C. TERRA-CARRIOLA LAT 2_anonymized.mp4
+    C. TERRA-CARRIOLA LAT 3_anonymized.mp4
+    C. TERRA-CARRIOLA LAT 4_anonymized.mp4
+    D. CARRIOLA-TERRA LAT 1_anonymized.mp4
+    D. CARRIOLA-TERRA LAT 2_anonymized.mp4
+    D. CARRIOLA-TERRA LAT 3_anonymized.mp4
+    D. TERRA-CARRIOLA LAT 1_anonymized.mp4
+    D. TERRA-CARRIOLA LAT 2_anonymized.mp4
+    D. TERRA-CARRIOLA LAT 3_anonymized.mp4
+
+B. video_env_4_oblique_anonymized (Oblique View, 19 files):
+    A. CARRIOLA-TERRA 3quarti 1_anonymized.mp4
+    A. CARRIOLA-TERRA 3quarti 2_anonymized.mp4
+    A. TERRA-CARRIOLA 3quarti 1_anonymized.mp4
+    A. TERRA-CARRIOLA 3quarti 2_anonymized.mp4
+    B. CARRIOLA-TERRA 3quarti 1_anonymized.mp4
+    B. CARRIOLA-TERRA 3quarti 2_anonymized.mp4
+    B. TERRA-CARRIOLA 3quarti 1_anonymized.mp4
+    B. TERRA-CARRIOLA 3quarti 2_anonymized.mp4
+    C. CARRIOLA-TERRA 3quarti 1_anonymized.mp4
+    C. CARRIOLA-TERRA 3quarti 2_anonymized.mp4
+    C. CARRIOLA-TERRA 3quarti 3_anonymized.mp4
+    C. TERRA-CARRIOLA 3quarti 1_anonymized.mp4
+    C. TERRA-CARRIOLA 3quarti 2_anonymized.mp4
+    D. CARRIOLA-TERRA 3quarti 1_anonymized.mp4
+    D. CARRIOLA-TERRA 3quarti 2_anonymized.mp4
+    D. CARRIOLA-TERRA 3quarti 3_anonymized.mp4
+    D. TERRA-CARRIOLA 3quarti 1_anonymized.mp4
+    D. TERRA-CARRIOLA 3quarti 2_anonymized.mp4
+    D. TERRA-CARRIOLA 3quarti 3_anonymized.mp4
+
+5. MATCHING REPORT
+----------------------------------------
+Matched References (49 / 49 extracted files):
+Annotation Reference                Extracted Filename                            Folder                             
+-------------------------------------------------------------------------------------------------------------------
+A. TERRA-CARRIOLA LAT 1.mp4         A. TERRA-CARRIOLA LAT 1_anonymized.mp4        video_env_4_anonymized             
+A. TERRA-CARRIOLA LAT 2.mp4         A. TERRA-CARRIOLA LAT 2_anonymized.mp4        video_env_4_anonymized             
+A. TERRA-CARRIOLA LAT 3.mp4         A. TERRA-CARRIOLA LAT 3_anonymized.mp4        video_env_4_anonymized             
+A. CARRIOLA-TERRA LAT 1.mp4         A. CARRIOLA-TERRA LAT 1_anonymized.mp4        video_env_4_anonymized             
+A. CARRIOLA-TERRA LAT 2.mp4         A. CARRIOLA-TERRA LAT 2_anonymized.mp4        video_env_4_anonymized             
+A. CARRIOLA-TERRA LAT 3.mp4         A. CARRIOLA-TERRA LAT 3_anonymized.mp4        video_env_4_anonymized             
+A. TERRA-CARRIOLA 3quarti 1.mp4     A. TERRA-CARRIOLA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+A. TERRA-CARRIOLA 3quarti 2.mp4     A. TERRA-CARRIOLA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+A. CARRIOLA-TERRA 3quarti 1.mp4     A. CARRIOLA-TERRA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+A. CARRIOLA-TERRA 3quarti 2.mp4     A. CARRIOLA-TERRA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+B. TERRA-CARRIOLA LAT 1.mp4         B. TERRA-CARRIOLA LAT 1_anonymized.mp4        video_env_4_anonymized             
+B. TERRA-CARRIOLA LAT 2.mp4         B. TERRA-CARRIOLA LAT 2_anonymized.mp4        video_env_4_anonymized             
+B. TERRA-CARRIOLA LAT 3.mp4         B. TERRA-CARRIOLA LAT 3_anonymized.mp4        video_env_4_anonymized             
+B. TERRA-CARRIOLA LAT 4.mp4         B. TERRA-CARRIOLA LAT 4_anonymized.mp4        video_env_4_anonymized             
+B. CARRIOLA-TERRA LAT 1.mp4         B. CARRIOLA-TERRA LAT 1_anonymized.mp4        video_env_4_anonymized             
+B. CARRIOLA-TERRA LAT 2.mp4         B. CARRIOLA-TERRA LAT 2_anonymized.mp4        video_env_4_anonymized             
+B. CARRIOLA-TERRA LAT 3.mp4         B. CARRIOLA-TERRA LAT 3_anonymized.mp4        video_env_4_anonymized             
+B. CARRIOLA-TERRA LAT 4.mp4         B. CARRIOLA-TERRA LAT 4_anonymized.mp4        video_env_4_anonymized             
+B. CARRIOLA-TERRA LAT 5.mp4         B. CARRIOLA-TERRA LAT 5_anonymized.mp4        video_env_4_anonymized             
+B. CARRIOLA-TERRA LAT 6.mp4         B. CARRIOLA-TERRA LAT 6_anonymized.mp4        video_env_4_anonymized             
+B. TERRA-CARRIOLA 3quarti 1.mp4     B. TERRA-CARRIOLA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+B. TERRA-CARRIOLA 3quarti 2.mp4     B. TERRA-CARRIOLA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+B. CARRIOLA-TERRA 3quarti 1.mp4     B. CARRIOLA-TERRA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+B. CARRIOLA-TERRA 3quarti 2.mp4     B. CARRIOLA-TERRA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+C. TERRA-CARRIOLA LAT 1.mp4         C. TERRA-CARRIOLA LAT 1_anonymized.mp4        video_env_4_anonymized             
+C. TERRA-CARRIOLA LAT 2.mp4         C. TERRA-CARRIOLA LAT 2_anonymized.mp4        video_env_4_anonymized             
+C. TERRA-CARRIOLA LAT 3.mp4         C. TERRA-CARRIOLA LAT 3_anonymized.mp4        video_env_4_anonymized             
+C. TERRA-CARRIOLA LAT 4.mp4         C. TERRA-CARRIOLA LAT 4_anonymized.mp4        video_env_4_anonymized             
+C. CARRIOLA-TERRA LAT 1.mp4         C. CARRIOLA-TERRA LAT 1_anonymized.mp4        video_env_4_anonymized             
+C. CARRIOLA-TERRA LAT 2.mp4         C. CARRIOLA-TERRA LAT 2_anonymized.mp4        video_env_4_anonymized             
+C. CARRIOLA-TERRA LAT 3.mp4         C. CARRIOLA-TERRA LAT 3_anonymized.mp4        video_env_4_anonymized             
+C. CARRIOLA-TERRA LAT 4.mp4         C. CARRIOLA-TERRA LAT 4_anonymized.mp4        video_env_4_anonymized             
+C. TERRA-CARRIOLA 3quarti 1.mp4     C. TERRA-CARRIOLA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+C. TERRA-CARRIOLA 3quarti 2.mp4     C. TERRA-CARRIOLA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+C. CARRIOLA-TERRA 3quarti 1.mp4     C. CARRIOLA-TERRA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+C. CARRIOLA-TERRA 3quarti 2.mp4     C. CARRIOLA-TERRA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+C. CARRIOLA-TERRA 3quarti 3.mp4     C. CARRIOLA-TERRA 3quarti 3_anonymized.mp4    video_env_4_oblique_anonymized     
+D. TERRA-CARRIOLA LAT 1.mp4         D. TERRA-CARRIOLA LAT 1_anonymized.mp4        video_env_4_anonymized             
+D. TERRA-CARRIOLA LAT 2.mp4         D. TERRA-CARRIOLA LAT 2_anonymized.mp4        video_env_4_anonymized             
+D. TERRA-CARRIOLA LAT 3.mp4         D. TERRA-CARRIOLA LAT 3_anonymized.mp4        video_env_4_anonymized             
+D. CARRIOLA-TERRA LAT 1.mp4         D. CARRIOLA-TERRA LAT 1_anonymized.mp4        video_env_4_anonymized             
+D. CARRIOLA-TERRA LAT 2.mp4         D. CARRIOLA-TERRA LAT 2_anonymized.mp4        video_env_4_anonymized             
+D. CARRIOLA-TERRA LAT 3.mp4         D. CARRIOLA-TERRA LAT 3_anonymized.mp4        video_env_4_anonymized             
+D. TERRA-CARRIOLA 3quarti 1.mp4     D. TERRA-CARRIOLA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+D. TERRA-CARRIOLA 3quarti 2.mp4     D. TERRA-CARRIOLA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+D. TERRA-CARRIOLA 3quarti 3.mp4     D. TERRA-CARRIOLA 3quarti 3_anonymized.mp4    video_env_4_oblique_anonymized     
+D. CARRIOLA-TERRA 3quarti 1.mp4     D. CARRIOLA-TERRA 3quarti 1_anonymized.mp4    video_env_4_oblique_anonymized     
+D. CARRIOLA-TERRA 3quarti 2.mp4     D. CARRIOLA-TERRA 3quarti 2_anonymized.mp4    video_env_4_oblique_anonymized     
+D. CARRIOLA-TERRA 3quarti 3.mp4     D. CARRIOLA-TERRA 3quarti 3_anonymized.mp4    video_env_4_oblique_anonymized     
+
+Unmatched Extracted Files on Disk: 0
+  None. All 49 extracted MP4 files on disk successfully matched.
+
+Unmatched Annotation Entries: 133 (Out of 182 total)
+  Explanation: The SAFELIFT annotations.json contains the entire multi-environment benchmark.
+  The local dataset directories only contain Environment 4 (video_env_4).
+  Breakdown of unmatched annotation video prefixes:
+    - gd        : 20 entries
+    - ll        : 16 entries
+    - ap        : 12 entries
+    - em        : 9 entries
+    - ah        : 9 entries
+    - mp        : 9 entries
+    - pz        : 9 entries
+    - rd        : 9 entries
+    - vp        : 9 entries
+    - jv        : 8 entries
+    - md        : 8 entries
+    - dn        : 8 entries
+    - ss        : 7 entries
+
+Ambiguous References:
+  Count: 0
+  Explanation: Every video reference in annotations.json is uniquely indexed. No collisions.
+
+6. DATASET INTEGRITY & CONSTRAINTS COMPLIANCE
+----------------------------------------
+- Original files modified : 0 (Read-only inspection enforced)
+- Files renamed           : 0
+- Inferred labels created : 0
+- Models trained          : 0
+================================================================================
+END OF AUDIT REPORT
+================================================================================

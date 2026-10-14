@@ -1,0 +1,7 @@
+clip_path,participant_id,session_id,label,view
+raw_videos/p1_s1_safe.mp4,P01,S01,0,lateral
+raw_videos/p1_s1_unsafe.mp4,P01,S01,1,lateral
+raw_videos/p2_s1_safe.mp4,P02,S01,0,lateral
+raw_videos/p2_s1_unsafe.mp4,P02,S01,1,lateral
+raw_videos/p3_s1_safe.mp4,P03,S01,0,lateral
+raw_videos/p3_s1_unsafe.mp4,P03,S01,1,lateral
