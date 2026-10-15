@@ -1,16 +1,17 @@
-"""Unit tests for pose-map rendering and landmark normalization."""
-
+import cv2
 import numpy as np
 import pytest
 
 import config
 from src.pose_extractor import LandmarkPoint
 from src.pose_renderer import (
+    draw_pose_overlay,
     load_preprocessing_config,
     normalize_and_clamp_point,
     render_pose_map,
     save_preprocessing_config,
 )
+from src.inference import transcode_to_browser_h264
 
 
 def test_normalize_and_clamp_point():
@@ -95,3 +96,61 @@ def test_save_and_load_preprocessing_config(tmp_path):
     assert loaded["canvas_width"] == 128
     assert loaded["canvas_channels"] == 1
     assert "skeletal_connections" in loaded
+
+
+def test_draw_pose_overlay_safe_and_unsafe():
+    """Verify HUD bar, skeleton connections, joint circles, and biomechanical angles in overlay."""
+    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    landmarks = [
+        LandmarkPoint(id=11, name="left_shoulder", x=0.4, y=0.3, z=0.0, visibility=0.9, presence=1.0),
+        LandmarkPoint(id=12, name="right_shoulder", x=0.6, y=0.3, z=0.0, visibility=0.95, presence=1.0),
+        LandmarkPoint(id=23, name="left_hip", x=0.42, y=0.6, z=0.0, visibility=0.88, presence=1.0),
+        LandmarkPoint(id=24, name="right_hip", x=0.58, y=0.6, z=0.0, visibility=0.91, presence=1.0),
+    ]
+
+    # Test SAFE posture overlay
+    annotated_safe = draw_pose_overlay(
+        frame_bgr=frame,
+        landmarks=landmarks,
+        status_label="SAFE POSTURE",
+        probability=0.12,
+        angles={"trunk_inclination": 24.5, "knee_angle_mean": 110.0},
+        fps=30.0,
+    )
+    assert annotated_safe.shape == (480, 640, 3)
+    assert annotated_safe.dtype == np.uint8
+    # Top HUD banner should be non-zero
+    assert np.any(annotated_safe[:74, :] > 0)
+    # Bottom ribbon should be non-zero
+    assert np.any(annotated_safe[-38:, :] > 0)
+
+    # Test UNSAFE posture overlay
+    annotated_unsafe = draw_pose_overlay(
+        frame_bgr=frame,
+        landmarks=landmarks,
+        status_label="UNSAFE POSTURE",
+        probability=0.88,
+        angles={"trunk_inclination": 58.0, "knee_angle_mean": 150.0},
+        fps=25.0,
+    )
+    assert annotated_unsafe.shape == (480, 640, 3)
+    assert np.any(annotated_unsafe[:74, :] > 0)
+
+
+def test_transcode_to_browser_h264(tmp_path):
+    """Verify transcoding of OpenCV-created raw video to web-ready H.264 MP4."""
+    raw_video = tmp_path / "raw_clip.mp4"
+    h264_video = tmp_path / "h264_clip.mp4"
+
+    vw = cv2.VideoWriter(str(raw_video), cv2.VideoWriter_fourcc(*"mp4v"), 10.0, (160, 120))
+    for _ in range(5):
+        frame = np.zeros((120, 160, 3), dtype=np.uint8)
+        cv2.circle(frame, (80, 60), 20, (0, 255, 0), -1)
+        vw.write(frame)
+    vw.release()
+
+    assert raw_video.exists() and raw_video.stat().st_size > 0
+
+    success = transcode_to_browser_h264(raw_video, h264_video)
+    assert h264_video.exists()
+    assert h264_video.stat().st_size > 0

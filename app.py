@@ -213,15 +213,31 @@ def page_posture_screening(classifier: LiftingPostureClassifier):
 
             video_path = None
             if uploaded_file:
-                tfile = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{uploaded_file.name}")
-                tfile.write(uploaded_file.read())
-                tfile.flush()
-                video_path = Path(tfile.name)
-                st.video(str(video_path))
+                # Detect new file upload to reset previous analysis
+                file_sig = f"{uploaded_file.name}_{uploaded_file.size}"
+                if st.session_state.get("active_file_sig") != file_sig:
+                    st.session_state.active_file_sig = file_sig
+                    st.session_state.pop("last_processed_video", None)
+
+                temp_dir = Path(tempfile.gettempdir()) / "liftguard_cache"
+                temp_dir.mkdir(parents=True, exist_ok=True)
+                clean_stem = "".join(c for c in Path(uploaded_file.name).stem if c.isalnum() or c in ("_", "-"))
+                suffix = Path(uploaded_file.name).suffix or ".mp4"
+                cached_input = temp_dir / f"upload_{clean_stem}{suffix}"
+
+                video_bytes = uploaded_file.getvalue()
+                with open(cached_input, "wb") as f_in:
+                    f_in.write(video_bytes)
+                video_path = cached_input
+
+                st.caption(f"Original Video ({len(video_bytes) / 1024 / 1024:.1f} MB):")
+                st.video(video_bytes, format="video/mp4")
                 run_btn = st.button("Run Analysis", type="primary", key="btn_run_analysis")
             else:
                 st.caption("Select an MP4, AVI, or MOV video clip. Sagittal (side) view yields optimal tracking.")
                 run_btn = False
+                if "last_processed_video" in st.session_state:
+                    st.session_state.pop("last_processed_video", None)
 
         with col_right:
             st.markdown('<div class="lg-section-header">' + ICONS["activity"] + ' Assessment Results</div>', unsafe_allow_html=True)
@@ -251,8 +267,11 @@ def page_posture_screening(classifier: LiftingPostureClassifier):
                 status_text = st.empty()
                 status_text.caption("Evaluating biomechanical angles across frames...")
 
-                out_annotated = Path(tempfile.gettempdir()) / f"annotated_{video_path.name}"
-                out_csv = Path(tempfile.gettempdir()) / f"preds_{video_path.stem}.csv"
+                out_dir = Path(tempfile.gettempdir()) / "liftguard_cache"
+                out_dir.mkdir(parents=True, exist_ok=True)
+                stem = Path(video_path).stem
+                out_annotated = out_dir / f"annotated_{stem}.mp4"
+                out_csv = out_dir / f"preds_{stem}.csv"
 
                 try:
                     df_preds, out_video_path, summary = process_recorded_video(
@@ -268,10 +287,10 @@ def page_posture_screening(classifier: LiftingPostureClassifier):
 
                     st.session_state.last_processed_video = {
                         "df_preds": df_preds,
-                        "annotated_path": str(out_annotated) if out_annotated.exists() else None,
-                        "csv_path": str(out_csv) if out_csv.exists() else None,
+                        "annotated_path": str(out_video_path) if (out_video_path and Path(out_video_path).exists()) else None,
+                        "csv_path": str(out_csv) if (out_csv and out_csv.exists()) else None,
                         "summary": summary,
-                        "stem": video_path.stem,
+                        "stem": stem,
                     }
                 except Exception as exc:
                     st.error(f"Analysis error: {exc}")
@@ -299,19 +318,24 @@ def page_posture_screening(classifier: LiftingPostureClassifier):
                 )
 
             # Playback of annotated video in left column below preview
-            if res_data.get("annotated_path") and Path(res_data["annotated_path"]).exists():
+            annotated_path_str = res_data.get("annotated_path")
+            annotated_file = Path(annotated_path_str) if annotated_path_str else None
+            if annotated_file and annotated_file.exists() and annotated_file.stat().st_size > 0:
                 with col_left:
                     st.markdown('<div class="lg-section-header">' + ICONS["shield_check"] + ' Annotated Video with Skeleton Overlay</div>', unsafe_allow_html=True)
-                    st.video(res_data["annotated_path"])
-                    with open(res_data["annotated_path"], "rb") as f_vid:
-                        st.download_button(
-                            "Export Annotated Video",
-                            data=f_vid.read(),
-                            file_name=f"annotated_{res_data['stem']}.mp4",
-                            mime="video/mp4",
-                            use_container_width=False,
-                            key="btn_dl_annotated_video"
-                        )
+                    annotated_bytes = annotated_file.read_bytes()
+                    st.video(annotated_bytes, format="video/mp4")
+                    st.download_button(
+                        "Export Annotated Video",
+                        data=annotated_bytes,
+                        file_name=f"annotated_{res_data['stem']}.mp4",
+                        mime="video/mp4",
+                        use_container_width=False,
+                        key="btn_dl_annotated_video"
+                    )
+            elif annotated_path_str:
+                with col_left:
+                    st.warning("Annotated video file could not be generated. Please check video source.")
 
             # Detailed Kinematics Expander
             with st.expander("Kinematic Trajectories and Frame Log", expanded=False):

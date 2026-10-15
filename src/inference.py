@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import collections
 import logging
+import shutil
+import subprocess
 import time
+import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Deque, Dict, List, Optional, Tuple, Union
@@ -30,6 +33,84 @@ from src.pose_extractor import PoseExtractionResult, PoseExtractor
 from src.pose_renderer import draw_pose_overlay, render_pose_map
 
 logger = logging.getLogger(__name__)
+
+
+def transcode_to_browser_h264(input_path: Path, output_path: Path) -> bool:
+    """Transcode a raw OpenCV video to standard H.264 (yuv420p) with faststart for HTML5 web playback.
+
+    Ensures seamless playback in Streamlit, Chrome, Edge, Safari, and Firefox.
+    Falls back gracefully to moving the original file if FFmpeg is unavailable.
+    """
+    ffmpeg_exe = None
+    try:
+        import imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        pass
+    if not ffmpeg_exe:
+        ffmpeg_exe = shutil.which("ffmpeg")
+
+    input_path = Path(input_path)
+    output_path = Path(output_path)
+
+    if not ffmpeg_exe or not Path(ffmpeg_exe).exists():
+        logger.warning("No FFmpeg executable found. Video will remain in its OpenCV-encoded format.")
+        if input_path != output_path and input_path.exists():
+            if output_path.exists():
+                output_path.unlink()
+            shutil.move(str(input_path), str(output_path))
+        return False
+
+    temp_out = output_path.with_name(f"_web_{uuid.uuid4().hex[:6]}_{output_path.name}")
+    try:
+        cmd = [
+            str(ffmpeg_exe),
+            "-y",
+            "-i", str(input_path),
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-preset", "ultrafast",
+            "-crf", "22",
+            "-movflags", "+faststart",
+            "-an",
+            str(temp_out),
+        ]
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=180,
+        )
+        if proc.returncode == 0 and temp_out.exists() and temp_out.stat().st_size > 0:
+            if output_path.exists():
+                output_path.unlink()
+            temp_out.replace(output_path)
+            if input_path.exists() and input_path != output_path:
+                try:
+                    input_path.unlink()
+                except Exception:
+                    pass
+            logger.info("Successfully transcoded annotated video to browser-compatible H.264: %s", output_path)
+            return True
+        else:
+            err_msg = proc.stderr.decode("utf-8", errors="ignore")
+            logger.warning("FFmpeg transcode failed (exit %d): %s", proc.returncode, err_msg)
+    except Exception as exc:
+        logger.warning("Error during FFmpeg H.264 transcode: %s", exc)
+    finally:
+        if temp_out.exists():
+            try:
+                temp_out.unlink()
+            except Exception:
+                pass
+
+    # Fallback: if transcode did not succeed, ensure output_path has the original file
+    if input_path != output_path and input_path.exists():
+        if output_path.exists():
+            output_path.unlink()
+        shutil.move(str(input_path), str(output_path))
+    return False
 
 # Standardized Posture Classification Status Tokens
 STATUS_SAFE_POSTURE = "SAFE POSTURE"
@@ -403,13 +484,22 @@ def process_recorded_video(
         total_frames = max_frames
 
     out_writer = None
+    raw_video_path = None
     if output_annotated_video_path:
+        output_annotated_video_path = Path(output_annotated_video_path)
         output_annotated_video_path.parent.mkdir(parents=True, exist_ok=True)
-        # mp4v format for broad cross-platform compatibility
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        out_writer = cv2.VideoWriter(
-            str(output_annotated_video_path), fourcc, fps, (width, height)
+        raw_video_path = output_annotated_video_path.with_name(
+            f"_raw_{uuid.uuid4().hex[:6]}_{output_annotated_video_path.name}"
         )
+        for cc in ["mp4v", "avc1", "H264", "XVID"]:
+            fourcc = cv2.VideoWriter_fourcc(*cc)
+            writer = cv2.VideoWriter(str(raw_video_path), fourcc, fps, (width, height))
+            if writer.isOpened():
+                out_writer = writer
+                logger.debug(f"VideoWriter initialized with codec '{cc}'")
+                break
+        if out_writer is None or not out_writer.isOpened():
+            logger.warning("Could not initialize VideoWriter for annotated video recording.")
 
     records: List[Dict[str, Any]] = []
     frame_idx = 0
@@ -468,6 +558,9 @@ def process_recorded_video(
     cap.release()
     if out_writer:
         out_writer.release()
+
+    if output_annotated_video_path and raw_video_path and raw_video_path.exists():
+        transcode_to_browser_h264(raw_video_path, output_annotated_video_path)
 
     df_preds = pd.DataFrame(records)
     if output_predictions_csv_path:
@@ -532,4 +625,14 @@ def process_recorded_video(
         assessment_method=clf.current_assessment_method,
     )
 
-    return df_preds, output_annotated_video_path, summary
+    final_annotated_path = (
+        output_annotated_video_path
+        if (
+            output_annotated_video_path
+            and output_annotated_video_path.exists()
+            and output_annotated_video_path.stat().st_size > 0
+        )
+        else None
+    )
+
+    return df_preds, final_annotated_path, summary
